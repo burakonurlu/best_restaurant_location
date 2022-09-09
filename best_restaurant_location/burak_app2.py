@@ -93,7 +93,7 @@ def merge_data(data, rest_district, rest_category_main, rest_category):
     if rest_category == 'All':
         data = filter_data(data, rest_district, rest_category_main, rest_category)
     else:
-        data = filter_data(data, rest_district, rest_category_main, 'All')\
+        data = filter_data(data, rest_district, 'All', 'All')\
             .merge(
                 filter_data(data, rest_district, rest_category_main, rest_category)\
                     .drop(columns=['district','user_ratings_total','combined_rating']),
@@ -167,6 +167,5 @@ for i in range(len(worst_locations)):
         color='red',
         fillColor='red',
         fill=True).add_to(geneva)
-
 
 folium_static(geneva)

@@ -30,6 +30,7 @@ termcolor
 
 # streamlit
 streamlit
+streamlit-folium
 folium
 operator-courier
 #os

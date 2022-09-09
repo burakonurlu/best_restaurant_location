@@ -78,8 +78,8 @@ def filter_data(data, rest_district, rest_category_main, rest_category):
     data = data.groupby(['district','district_cluster'])\
         [['place_id', 'user_ratings_total','combined_rating']]\
         .agg({'place_id':'count',
-        'user_ratings_total':'mean',
-        'combined_rating':'mean'})\
+        'user_ratings_total':'median',
+        'combined_rating':'median'})\
         .rename(columns={'place_id':f'{rest_category.lower()}_restaurants'})
 
     return data.reset_index()

@@ -61,7 +61,7 @@ level_two_options = {'General / Restaurant': ['General'],
 
 first_choice = "General"
 first_choice = st.sidebar.selectbox("First level options", level_two_options.keys())
-#second_choice = st.sidebar.selectbox("Second level options", level_two_options[first_choice])
+second_choice = st.sidebar.selectbox("Second level options", level_two_options[first_choice])
 
 def search(df, category):
   search = lambda x:True if category.lower() in x.lower() else False

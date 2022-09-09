@@ -33,5 +33,6 @@ streamlit
 streamlit-folium
 folium
 operator-courier
+plotly
 #os
 #http

@@ -19,7 +19,7 @@ st.markdown("""# Next Restaurant in Geneva
 
 # importing data to notebook
 
-df=pd.read_csv('../raw_data/data_combined_v1.03.csv')
+df=pd.read_csv('../data/data_combined_v1.03.csv')
 
 
 geneva=folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=11)

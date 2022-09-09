@@ -19,10 +19,11 @@ st.markdown("""# Next Restaurant in Geneva
 
 # importing data to notebook
 
-df=pd.read_csv('../raw_data/data_combined_v1.03.csv')
+df=pd.read_csv('../data/data_combined_v1.03.csv')
 
 
 geneva=folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=11)
+
 
 
 level_two_options = {'General / Restaurant': ['General'],
@@ -60,7 +61,7 @@ level_two_options = {'General / Restaurant': ['General'],
 
 first_choice = "General"
 first_choice = st.sidebar.selectbox("First level options", level_two_options.keys())
-second_choice = st.sidebar.selectbox("Second level options", level_two_options[first_choice])
+#second_choice = st.sidebar.selectbox("Second level options", level_two_options[first_choice])
 
 def search(df, category):
   search = lambda x:True if category.lower() in x.lower() else False

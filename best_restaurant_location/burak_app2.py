@@ -79,7 +79,7 @@ def filter_data(data, rest_district, rest_category_main, rest_category):
         [['place_id', 'user_ratings_total','combined_rating']]\
         .agg({'place_id':'count',
         'user_ratings_total':'median',
-        'combined_rating':'median'})\
+        'combined_rating':'mean'})\
         .rename(columns={'place_id':f'{rest_category.lower()}_restaurants'})
 
     return data.reset_index()

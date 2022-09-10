@@ -27,3 +27,12 @@ six>=1.14
 joblib
 memoized-property
 termcolor
+
+# streamlit
+streamlit
+streamlit-folium
+folium
+operator-courier
+plotly
+#os
+#http

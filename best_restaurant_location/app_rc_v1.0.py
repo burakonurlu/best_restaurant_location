@@ -13,6 +13,7 @@ import numpy as np
 import os
 import pandas as pd
 from scipy.spatial import ConvexHull
+import plotly.graph_objects as go
 
 
 st.markdown("""# Next Restaurant in Geneva
@@ -72,7 +73,7 @@ def filter_data_scoring(data, rest_district, rest_category_main, rest_category):
     data = data.groupby(['district','district_cluster'])\
         [['place_id', 'user_ratings_total','combined_rating']]\
         .agg({'place_id':'count',
-        'user_ratings_total':'median',
+        'user_ratings_total':'mean',
         'combined_rating':'mean'})\
         .rename(columns={'place_id':f'{rest_category.lower()}_restaurants'})
 
@@ -95,7 +96,7 @@ def merge_data(data, rest_district, rest_category_main, rest_category):
             .fillna(0)
     return data
 
-def score_data(data, rest_district, rest_category_main, rest_category):
+def score_data(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat):
     """
     Normalizes merged data set and create a custom scoring
     """
@@ -109,29 +110,40 @@ def score_data(data, rest_district, rest_category_main, rest_category):
     df_score = pd.DataFrame(scaler.transform(cols), columns=cols.columns+'_norm')
 
     # scoring
-    df_score['score'] = (1-df_score['all_restaurants_norm'])\
-                        + df_score['user_ratings_total_norm']\
-                        + (1-df_score['combined_rating_norm'])
 
-    if rest_category != 'All':
-        df_score['score'] += (1-df_score[f'{rest_category.lower()}_restaurants_norm'])
+    if rest_category == 'All':
+        score_tot = score_com + score_pop + score_sat
+        df_score['score'] = (score_com * (1-df_score['all_restaurants_norm'])\
+                            +score_pop * df_score['user_ratings_total_norm']\
+                            +score_sat * (1-df_score['combined_rating_norm']))\
+                            / score_tot
+
+    else:
+        score_tot = 2 * score_com + score_pop + score_sat
+        df_score['score'] = (score_com * (1-df_score['all_restaurants_norm'])\
+                            +score_pop * df_score['user_ratings_total_norm']\
+                            +score_sat * (1-df_score['combined_rating_norm'])
+                            +score_com * (1-df_score[f'{rest_category.lower()}_restaurants_norm']))\
+                            / score_tot
 
     # create output data_set
     df_output = pd.concat([df_merged, df_score], axis=1)\
         .merge(df_cluster_centers, how='left', on='district_cluster')
     return df_output
 
-def pick_location(data, rest_district, rest_category_main, rest_category):
+def pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat):
     """
     Select best / worst location based on custom scoring
     """
     if rest_district == 'All':
-        n = 10
+        n = 5
     else:
         n = 1
 
-    best_location = score_data(data, rest_district, rest_category_main, rest_category).nlargest(n, 'score').reset_index(drop=True)
-    worst_location = score_data(data, rest_district, rest_category_main, rest_category).nsmallest(n, 'score').reset_index(drop=True)
+    best_location = score_data(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)\
+        .nlargest(n, 'score').reset_index(drop=True)
+    worst_location = score_data(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)\
+        .nsmallest(n, 'score').reset_index(drop=True)
 
     return best_location, worst_location
 
@@ -188,10 +200,17 @@ list_district = [
     'Champel']
 
 # choose the categories
-st.sidebar.write('Select the type of cuisine 🍽')
-rest_category_main = st.sidebar.selectbox("Select Main Restaurant Category", dict_rest.keys())
-rest_category = st.sidebar.selectbox("Select Sub Restaurant Category", dict_rest[rest_category_main])
-rest_district = st.sidebar.selectbox("Select District", list_district)
+st.sidebar.write('**Select the type of cuisine 🍽**')
+rest_category_main = st.sidebar.selectbox("Main Restaurant Category", dict_rest.keys())
+rest_category = st.sidebar.selectbox("Sub Restaurant Category", dict_rest[rest_category_main])
+rest_district = st.sidebar.selectbox("Area", list_district)
+
+st.sidebar.text("")
+st.sidebar.write('**Select Scoring Criteria 🎯**')
+score_com = st.sidebar.slider('Number of Competitors', min_value=0, max_value=4, value=2, step=1)
+score_pop = st.sidebar.slider('Area Popularity', min_value=0, max_value=4, value=2, step=1)
+score_sat = st.sidebar.slider('Customer Satisfaction', min_value=0, max_value=4, value=2, step=1)
+
 
 #create basic maps to be filled
 geneva_1 = folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=13.4, tiles='cartodbpositron')
@@ -302,46 +321,13 @@ with st.expander("See more information"):
     st.write(f'Their general price level is: {round(df.price_level_combined.mean())}💲')
 
 
-districts = data['district'].unique()
+districts = data['district'].unique() # is this required?
 
 #geneva_zip_codes.fit_bounds([venues[['geometry.location.lat'][1]], venues['geometry.location.lng'][1]])
 
-st.markdown(""" ## Some interactive graphs""")
-
-code_df = pd.DataFrame(index=range(len(districts)),columns=['district', 'avarage price level', 'avarage review', 'number of restaurants'])
-
-n=0
-while n<len(districts):
-    for i in districts:
-        code_df['district'][n]=i
-        code_df['avarage price level'][n]=round(data[data['district']==i]['price_level_combined'].mean(),2)
-        code_df['avarage review'][n]=data[data['district']==i]['combined_rating'].median()
-        code_df['number of restaurants'][n] = len(data[data['district']==i])
-        n+=1
-
-import plotly.graph_objects as go
-
-codes_string = ([str(x) for x in districts])
-
-fig = go.Figure(data=[
-    go.Bar(name='avarage price level', x=codes_string, y=code_df['avarage price level']),
-    go.Bar(name='avarage review', x=codes_string, y=code_df['avarage review']),
-])
-
-fig1 = go.Figure(data=[go.Bar(name='number of restaurant', x=codes_string, y=code_df['number of restaurants'])])
-
-# Change the bar mode
-
-fig.update_layout(barmode='group', title='Check the avarage price level and review score for the selected category')
-st.plotly_chart(fig)
-
-
-fig1.update_layout(barmode='group', title='Check number of restaurants for the selected category')
-st.plotly_chart(fig1)
-
 ### MAP Best / Worst Locations START ###
-best_locations = pick_location(data, rest_district, rest_category_main, rest_category)[0]
-worst_locations = pick_location(data, rest_district, rest_category_main, rest_category)[1]
+best_locations = pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)[0]
+worst_locations = pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)[1]
 
 geneva_5 = folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=13.6, tiles='cartodbpositron')
 

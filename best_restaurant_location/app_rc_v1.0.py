@@ -3,6 +3,7 @@ from http import server
 from operator import le
 from textwrap import shorten
 import streamlit as st
+st.set_page_config(layout="centered", page_title="Next Resturant in Geneva", page_icon=":cook:")
 import geopandas as gpd
 from IPython.core.display import display, HTML
 import folium
@@ -14,11 +15,7 @@ import os
 import pandas as pd
 from scipy.spatial import ConvexHull
 import plotly.graph_objects as go
-
-
-st.markdown("""# Next Restaurant in Geneva
-## Click on the Markers to get more information""")
-
+# let's remove unused modules later
 
 # main dataframe with decreased columns
 data = pd.read_csv('data/data_combined_v1.04.csv')\
@@ -34,10 +31,11 @@ data = pd.read_csv('data/data_combined_v1.04.csv')\
     'district_cluster',
     'combined_main_category_2']]
 
-# dataframe contains coordinates for district clusters
+# Dataframe contains coordinates for district and district clusters
 df_cluster_centers = pd.read_csv('data/data_cluster_centers_v1.02.csv')
+df_district = pd.read_csv('data/data_district.csv')
 
-### Functions Start ###
+# Functions Start
 def filter_data(data, rest_district, rest_category_main, rest_category):
     """
     Filters main dataframe based on district or restaurant selection
@@ -110,7 +108,6 @@ def score_data(data, rest_district, rest_category_main, rest_category, score_com
     df_score = pd.DataFrame(scaler.transform(cols), columns=cols.columns+'_norm')
 
     # scoring
-
     if rest_category == 'All':
         score_tot = score_com + score_pop + score_sat
         df_score['score'] = (score_com * (1-df_score['all_restaurants_norm'])\
@@ -170,9 +167,9 @@ def search(df, category):
   venues_lat_long = list(zip(venues['geometry.location.lat'], venues['geometry.location.lng']))
   return venues
 
-### Functions END ###
+# Functions END
 
-# this is just a test on anea's idea, not the final categorization
+# Required dictionary for restaurant dropdown menu
 dict_rest = {
     'All':['All'],
     'European': ['All', 'European', 'French', 'Italian', 'Swiss', 'Portuguese', 'Spanish'],
@@ -186,45 +183,66 @@ dict_rest = {
     'Vegan / Vegetarian / Salad': ['Vegan / Vegetarian / Salad'],
     'All Other': ['All Other']}
 
+# Required dictionary for area dropdown menu
 list_district = [
     'All',
-    'Saint-Jean Charmilles',
     'Bâtie - Acacias',
-    'Servette Petit-Saconnex',
-    'Jonction - Plainpalais',
+    'Champel',
+    'Saint-Jean Charmilles',
+    'Cité-Centre',
     'Eaux-Vives - Lac',
     'Grottes Saint-Gervais',
-    'Pâquis Sécheron',
+    'Jonction - Plainpalais',
     'La Cluse - Philosophes',
-    'Cité-Centre',
-    'Champel']
+    'Pâquis Sécheron',
+    'Servette Petit-Saconnex']
 
-# choose the categories
-st.sidebar.write('**Select the type of cuisine 🍽**')
+# Dropdown Menu START
+st.sidebar.write('**Select Cuisine 🍽**')
 rest_category_main = st.sidebar.selectbox("Main Restaurant Category", dict_rest.keys())
 rest_category = st.sidebar.selectbox("Sub Restaurant Category", dict_rest[rest_category_main])
-rest_district = st.sidebar.selectbox("Area", list_district)
+rest_district = st.sidebar.selectbox('Select Area 🗺',list_district)
 
 st.sidebar.text("")
 st.sidebar.write('**Select Scoring Criteria 🎯**')
 score_com = st.sidebar.slider('Number of Competitors', min_value=0, max_value=4, value=2, step=1)
 score_pop = st.sidebar.slider('Area Popularity', min_value=0, max_value=4, value=2, step=1)
 score_sat = st.sidebar.slider('Customer Satisfaction', min_value=0, max_value=4, value=2, step=1)
+# Dropdown Menu END
 
-
-#create basic maps to be filled
-geneva_1 = folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=13.4, tiles='cartodbpositron')
-geneva_2 = folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=13.4, tiles='cartodbpositron')
-geneva_3 = folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=13.4, tiles='cartodbpositron')
-geneva_4 = folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=13.4, tiles='cartodbpositron')
-
-
-data['combined_main_category'].fillna(value='not defined', inplace=True) # not sure this is needed anymore
-
+# filtered dataframe based on dropdpwn menu selection
 df = filter_data(data, rest_district, rest_category_main, rest_category)
 
+#create basic maps to be filled
+lat = df_district[df_district['district']==rest_district]['district_lat']
+lng = df_district[df_district['district']==rest_district]['district_lng']
 
-### Section for Overview Maps ###
+# this can be part of the df later after finalization
+zoom_start = {'All': 13.4,
+            'Bâtie - Acacias': 15.4,
+            'Champel': 14.4,
+            'Cité-Centre': 15.4,
+            'Eaux-Vives - Lac': 15,
+            'Grottes Saint-Gervais': 15.4,
+            'Jonction - Plainpalais': 15.4,
+            'La Cluse - Philosophes': 15.4,
+            'Pâquis Sécheron': 15.0,
+            'Saint-Jean Charmilles': 15.0,
+            'Servette Petit-Saconnex': 15.0}
+
+geneva_1 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='cartodbpositron')
+geneva_2 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='cartodbpositron')
+geneva_3 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='cartodbpositron')
+geneva_4 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='cartodbpositron')
+geneva_5 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='cartodbpositron')
+
+# data['combined_main_category'].fillna(value='not defined', inplace=True) # not sure this is needed anymore - Burak
+
+st.header('Next Restaurant in Geneva 👨🏻‍🍳🇨🇭')
+
+# Map Section START
+
+## Map 01 - Overview
 marker_cluster = folium.plugins.MarkerCluster().add_to(geneva_1)
 
 if len(df)!=0:
@@ -236,6 +254,25 @@ if len(df)!=0:
 
 # folium.LayerControl().add_to(geneva_1) # this gives a weird layer selection, so removed for the moment - Burak
 
+## Map 02 - Price Levels
+group0 = folium.FeatureGroup(name='<span style=\\"color: red;\\">$$$$</span>')
+group1 = folium.FeatureGroup(name='<span style=\\"color: orange;\\">$$$-$$$$</span>')
+group2 = folium.FeatureGroup(name='<span style=\\"color: green;\\">$-$$</span>')
+
+for i,row in df.iterrows():
+    if row['price_level_combined']<3:
+        folium.CircleMarker(location=[row['geometry.location.lat'], row['geometry.location.lng']],radius=4, color='green',fillColor='green', fill=True, popup=[row['name'], row['price_level_combined']]).add_to(group2)
+    elif row['price_level_combined']<4 and row['price_level_combined']>=3:
+        folium.CircleMarker(location=[row['geometry.location.lat'], row['geometry.location.lng']], radius=4, color='orange',fillColor='orange', fill=True, popup=[row['name'], row['price_level_combined']] ).add_to(group1)
+    elif row['price_level_combined']>=4:
+        folium.CircleMarker(location=[row['geometry.location.lat'], row['geometry.location.lng']], radius=4, color='red',fillColor='red', fill=True, popup=[row['name'], row['price_level_combined']] ).add_to(group0)
+
+group0.add_to(geneva_2)
+group1.add_to(geneva_2)
+group2.add_to(geneva_2)
+folium.map.LayerControl('topright', collapsed=False).add_to(geneva_2)
+
+## Map 03 - Review Scores
 group0 = folium.FeatureGroup(name='<span style=\\"color: red;\\">rating below 3.0</span>')
 group1 = folium.FeatureGroup(name='<span style=\\"color: orange;\\">rating between 3.0 and 4.0</span>')
 group2 = folium.FeatureGroup(name='<span style=\\"color: lightgreen;\\">rating between 4 and 4.5</span>')
@@ -257,24 +294,7 @@ group2.add_to(geneva_3)
 group3.add_to(geneva_3)
 folium.map.LayerControl('topright', collapsed=False).add_to(geneva_3)
 
-group0 = folium.FeatureGroup(name='<span style=\\"color: red;\\">$$$$</span>')
-group1 = folium.FeatureGroup(name='<span style=\\"color: orange;\\">$$$-$$$$</span>')
-group2 = folium.FeatureGroup(name='<span style=\\"color: green;\\">$-$$</span>')
-
-for i,row in df.iterrows():
-    if row['price_level_combined']<3:
-        folium.CircleMarker(location=[row['geometry.location.lat'], row['geometry.location.lng']],radius=4, color='green',fillColor='green', fill=True, popup=[row['name'], row['price_level_combined']]).add_to(group2)
-    elif row['price_level_combined']<4 and row['price_level_combined']>=3:
-        folium.CircleMarker(location=[row['geometry.location.lat'], row['geometry.location.lng']], radius=4, color='orange',fillColor='orange', fill=True, popup=[row['name'], row['price_level_combined']] ).add_to(group1)
-    elif row['price_level_combined']>=4:
-        folium.CircleMarker(location=[row['geometry.location.lat'], row['geometry.location.lng']], radius=4, color='red',fillColor='red', fill=True, popup=[row['name'], row['price_level_combined']] ).add_to(group0)
-
-group0.add_to(geneva_2)
-group1.add_to(geneva_2)
-group2.add_to(geneva_2)
-folium.map.LayerControl('topright', collapsed=False).add_to(geneva_2)
-
-
+## Map 04 - Number of Reviews
 group0 = folium.FeatureGroup(name='<span style=\\"color: red;\\">less then 50 ratings</span>')
 group1 = folium.FeatureGroup(name='<span style=\\"color: orange;\\">between 50 and 149 ratings</span>')
 group2 = folium.FeatureGroup(name='<span style=\\"color: lightgreen;\\">between 150 and 199 ratings</span>')
@@ -295,41 +315,9 @@ group3.add_to(geneva_4)
 
 folium.map.LayerControl('topright', collapsed=False).add_to(geneva_4)
 
-# display the maps
-tab1, tab2, tab3, tab4 = st.tabs(["Overview", "Price Level", "Review Scores", "Number of Reviews"])
-
-with tab1:
-    #st.header("## Check the best and worst restaurants based on general info")
-    folium_static(geneva_1)
-
-with tab2:
-    #st.markdown("## Check the best and worst restaurants based on Price Level")
-    folium_static(geneva_2)
-
-with tab3:
-    #st.header("## Check the best and worst restaurants based on Review Score")
-    folium_static(geneva_3)
-
-with tab4:
-    #st.header("## Check the best and worst restaurants based on Number of Reviews")
-    folium_static(geneva_4)
-
-
-with st.expander("See more information"):
-    st.write(f'In Geneva there are **{len(df)}** restaurants belonging to the selected category')
-    st.write(f'Their general review score is: {df.combined_rating.median()}📈')
-    st.write(f'Their general price level is: {round(df.price_level_combined.mean())}💲')
-
-
-districts = data['district'].unique() # is this required?
-
-#geneva_zip_codes.fit_bounds([venues[['geometry.location.lat'][1]], venues['geometry.location.lng'][1]])
-
-### MAP Best / Worst Locations START ###
+## Map 05 - Best / Worst Location
 best_locations = pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)[0]
 worst_locations = pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)[1]
-
-geneva_5 = folium.Map(location=[46.20494053262858, 6.142254182958967], zoom_start=13.6, tiles='cartodbpositron')
 
 for i, row in best_locations.iterrows():
     cluster = row['district_cluster']
@@ -349,4 +337,38 @@ for i, row in worst_locations.iterrows():
                         weight=1,
                         text=f"{row['district_cluster']}")
 
-folium_static(geneva_5)
+## Map Display
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗺 Overview", "💰 Price Levels", "📊 Review Scores", "📈 Number of Reviews", "🟢🔴 Best/Worst Locations"])
+
+
+with tab1:
+    #st.header("## Check the best and worst restaurants based on general info")
+    folium_static(geneva_1)
+
+with tab2:
+    #st.markdown("## Check the best and worst restaurants based on Price Level")
+    folium_static(geneva_2)
+
+with tab3:
+    #st.header("## Check the best and worst restaurants based on Review Score")
+    folium_static(geneva_3)
+
+with tab4:
+    #st.header("## Check the best and worst restaurants based on Number of Reviews")
+    folium_static(geneva_4)
+
+with tab5:
+    #st.header("## Check the best and worst restaurants based on Number of Reviews")
+    folium_static(geneva_5)
+
+# Map Section END
+
+
+st.write(f'In Geneva there are **{len(df)}** restaurants belonging to the selected category')
+st.write(f'Their general review score is: {df.combined_rating.median()}📈')
+st.write(f'Their general price level is: {round(df.price_level_combined.mean())}💲')
+
+
+# districts = data['district'].unique() # is this required? - Burak
+
+#geneva_zip_codes.fit_bounds([venues[['geometry.location.lat'][1]], venues['geometry.location.lng'][1]]) - is this required Burak

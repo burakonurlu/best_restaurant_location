@@ -34,5 +34,6 @@ streamlit-folium
 folium
 operator-courier
 plotly
+geopandas
 #os
 #http

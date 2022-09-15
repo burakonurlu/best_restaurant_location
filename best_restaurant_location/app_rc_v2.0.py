@@ -294,10 +294,10 @@ group2.add_to(geneva_2)
 folium.map.LayerControl('topright', collapsed=False).add_to(geneva_2)
 
 ## Map 03 - Review Scores
-group0 = folium.FeatureGroup(name='<span style=\\"color: red;\\">rating below 3.0</span>')
-group1 = folium.FeatureGroup(name='<span style=\\"color: orange;\\">rating between 3.0 and 4.0</span>')
-group2 = folium.FeatureGroup(name='<span style=\\"color: lightgreen;\\">rating between 4 and 4.5</span>')
-group3 = folium.FeatureGroup(name='<span style=\\"color: green;\\">rating above 4.5</span>')
+group0 = folium.FeatureGroup(name='<span style=\\"color: red;\\">below 3.0</span>')
+group1 = folium.FeatureGroup(name='<span style=\\"color: orange;\\">between 3.0 and 4.0</span>')
+group2 = folium.FeatureGroup(name='<span style=\\"color: lightgreen;\\">between 4 and 4.5</span>')
+group3 = folium.FeatureGroup(name='<span style=\\"color: green;\\">above 4.5</span>')
 for i,row in df.iterrows():
     if row['combined_rating']<3.0:
         folium.CircleMarker(location=[row['geometry.location.lat'], row['geometry.location.lng']],radius=4, color='red',fillColor='red', fill=True,
@@ -357,6 +357,19 @@ for i, row in worst_locations.iterrows():
                         fill_color='red',
                         weight=1,
                         text=f"{row['district_cluster']}")
+    
+if rest_category_main=='All' and rest_category=='All' and rest_district=='All':
+    res = 'all restaurants in Geneva'
+elif rest_category_main!='All' and rest_category=='All' and rest_district=='All':
+    res = f'all {rest_category_main} restaurants in Geneva'
+elif rest_category_main!='All' and rest_category!='All' and rest_district=='All':
+    res = f'all {rest_category} restaurants in Geneva'
+elif rest_category_main!='All' and rest_category!='All' and rest_district!='All':
+    res = f'all {rest_category} restaurants in {rest_district}'
+elif rest_category_main=='All' and rest_category=='All' and rest_district!='All':
+    res = f'all restaurants in {rest_district}'
+elif rest_category_main!='All' and rest_category=='All' and rest_district!='All':
+    res = f'all {rest_category_main} restaurants in {rest_district}'
 
 ## Map Display
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗺 Overview", "＄ Price Levels", "📊 Review Scores", "📈 Number of Reviews", "🟢🔴 Best/Worst Locations"])
@@ -364,22 +377,32 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗺 Overview", "＄ Price Levels", "�
 with tab1:
     #st.header("## Check the best and worst restaurants based on general info")
     folium_static(geneva_1)
+    st.write(f'The overview shows {res} 📍')
+    st.write('Please use the dropdown menus on the left to make a selection')
 
 with tab2:
     #st.markdown("## Check the best and worst restaurants based on Price Level")
     folium_static(geneva_2)
+    st.write(f'The map shows the **Price Level** of {res} 📍')
+    st.write(f'Use the checkboxes to filter your selection ☑️')
 
 with tab3:
     #st.header("## Check the best and worst restaurants based on Review Score")
     folium_static(geneva_3)
+    st.write(f'The map shows the **Review Score** of {res} 📍')
+    st.write(f'Use the checkboxes to filter your selection ☑️')
 
 with tab4:
     #st.header("## Check the best and worst restaurants based on Number of Reviews")
     folium_static(geneva_4)
+    st.write(f'The map shows the **Number of Reviews** of {res} 📍')
+    st.write(f'Use the checkboxes to filter your selection ☑️')
 
 with tab5:
     #st.header("## Check the best and worst restaurants based on Number of Reviews")
     folium_static(geneva_5)
+    st.write('The map shows the **Best Locations** in green and **Worst Locations** in red')
+    st.write('Select the Criteria on the left to change the scoring')
 
 # Map Section END
 

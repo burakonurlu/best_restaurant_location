@@ -1,4 +1,5 @@
 from dis import show_code
+
 from http import server
 from operator import le
 from textwrap import shorten
@@ -115,7 +116,6 @@ def score_data(data, rest_district, rest_category_main, rest_category, score_com
                             +score_sat * (1-df_score['combined_rating_norm']))\
                             / score_tot
 
-
     else:
         score_tot = 2 * score_com + score_pop + score_sat
         df_score['score'] = (score_com * (1-df_score['all_restaurants_norm'])\
@@ -161,7 +161,7 @@ def create_convexhull_polygon(map_object, list_of_points, layer_name, line_color
 
     return (map_object)
 
-#filter and search the restaurants - Let's test and remove - Burak
+#filter and search the restaurants
 def search(df, category):
   search = lambda x:True if category.lower() in x.lower() else False
   venues = df[df['combined_main_category'].apply(search)].reset_index(drop='index')
@@ -173,7 +173,7 @@ def search(df, category):
 # Required dictionary for restaurant dropdown menu
 dict_rest = {
     'All':['All'],
-    'European': ['All', 'French', 'Italian', 'Swiss', 'Portuguese', 'Spanish'],
+    'European': ['All', 'European', 'French', 'Italian', 'Swiss', 'Portuguese', 'Spanish'],
     'Asian':['All', 'Japanese', 'Chinese', 'Thai', 'Indian', 'Other Asian'],
     'Middle Eastern & African': ['All', 'Lebanese', 'Turkish', 'Other Middle Eastern', 'African'],
     'American': ['All', 'American', 'South American', 'Mexican', 'Hawaiian'],
@@ -198,38 +198,17 @@ list_district = [
     'Pâquis Sécheron',
     'Servette Petit-Saconnex']
 
-# Required dictionary for sliders
-dict_slider1 = {'very low':0,
-               'low':1,
-               'neutral':2,
-               'high':3,
-               'very high':4}
-
-dict_slider2 = {'very low':4,
-               'low':3,
-               'neutral':2,
-               'high':1,
-               'very high':0}
-
-
 # Dropdown Menu START
 st.sidebar.write('**Select Cuisine 🍽**')
 rest_category_main = st.sidebar.selectbox("Main Restaurant Category", dict_rest.keys())
 rest_category = st.sidebar.selectbox("Sub Restaurant Category", dict_rest[rest_category_main])
 rest_district = st.sidebar.selectbox('Select Area 🗺',list_district)
-
-st.sidebar.text("")
-st.sidebar.write('**Select Scoring Criteria 🎯**')
-#score_com = st.sidebar.slider('Number of Competitors', min_value=0, max_value=4, value=2, step=1)
-score_com_slider = st.sidebar.select_slider('Number of Competitors', options=['very low', 'low', 'neutral', 'high', 'very high'], value='neutral')
-score_pop_slider = st.sidebar.select_slider('Area Popularity', options=['very low', 'low', 'neutral', 'high', 'very high'], value='neutral')
-score_sat_slider = st.sidebar.select_slider('Customer Satisfaction', options=['very low', 'low', 'neutral', 'high', 'very high'], value='neutral')
+st.sidebar.write("Select the Scoring Criteria 🎯")
+score_com = st.sidebar.slider('Number of Competitors', min_value=0, max_value=4, value=2, step=1, disabled=True)
+score_pop = st.sidebar.slider('Area Popularity', min_value=0, max_value=4, value=2, step=1, disabled=True)
+score_sat = st.sidebar.slider('Customer Satisfaction', min_value=0, max_value=4, value=2, step=1, disabled=True)
 
 # Dropdown Menu END
-
-score_pop = dict_slider1[score_pop_slider]
-score_com = dict_slider2[score_com_slider]
-score_sat = dict_slider2[score_sat_slider]
 
 # filtered dataframe based on dropdpwn menu selection
 df = filter_data(data, rest_district, rest_category_main, rest_category)
@@ -294,10 +273,10 @@ group2.add_to(geneva_2)
 folium.map.LayerControl('topright', collapsed=False).add_to(geneva_2)
 
 ## Map 03 - Review Scores
-group0 = folium.FeatureGroup(name='<span style=\\"color: red;\\">below 3.0</span>')
-group1 = folium.FeatureGroup(name='<span style=\\"color: orange;\\">between 3.0 and 4.0</span>')
-group2 = folium.FeatureGroup(name='<span style=\\"color: lightgreen;\\">between 4 and 4.5</span>')
-group3 = folium.FeatureGroup(name='<span style=\\"color: green;\\">above 4.5</span>')
+group0 = folium.FeatureGroup(name='<span style=\\"color: red;\\">rating below 3.0</span>')
+group1 = folium.FeatureGroup(name='<span style=\\"color: orange;\\">rating between 3.0 and 4.0</span>')
+group2 = folium.FeatureGroup(name='<span style=\\"color: lightgreen;\\">rating between 4 and 4.5</span>')
+group3 = folium.FeatureGroup(name='<span style=\\"color: green;\\">rating above 4.5</span>')
 for i,row in df.iterrows():
     if row['combined_rating']<3.0:
         folium.CircleMarker(location=[row['geometry.location.lat'], row['geometry.location.lng']],radius=4, color='red',fillColor='red', fill=True,
@@ -336,28 +315,6 @@ group3.add_to(geneva_4)
 
 folium.map.LayerControl('topright', collapsed=False).add_to(geneva_4)
 
-## Map 05 - Best / Worst Location
-best_locations = pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)[0]
-worst_locations = pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)[1]
-
-for i, row in best_locations.iterrows():
-    cluster = row['district_cluster']
-    list_of_points = data[data['district_cluster']==cluster][['geometry.location.lat','geometry.location.lng']].to_numpy()
-    create_convexhull_polygon(geneva_5, list_of_points, layer_name='Best Locations',
-                        line_color='green',
-                        fill_color='green',
-                        weight=1,
-                        text=f"{row['district_cluster']}")
-
-for i, row in worst_locations.iterrows():
-    cluster = row['district_cluster']
-    list_of_points = data[data['district_cluster']==cluster][['geometry.location.lat','geometry.location.lng']].to_numpy()
-    create_convexhull_polygon(geneva_5, list_of_points, layer_name='Best Locations',
-                        line_color='red',
-                        fill_color='red',
-                        weight=1,
-                        text=f"{row['district_cluster']}")
-    
 if rest_category_main=='All' and rest_category=='All' and rest_district=='All':
     res = 'all restaurants in Geneva'
 elif rest_category_main!='All' and rest_category=='All' and rest_district=='All':
@@ -371,40 +328,81 @@ elif rest_category_main=='All' and rest_category=='All' and rest_district!='All'
 elif rest_category_main!='All' and rest_category=='All' and rest_district!='All':
     res = f'all {rest_category_main} restaurants in {rest_district}'
 
+
 ## Map Display
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗺 Overview", "＄ Price Levels", "📊 Review Scores", "📈 Number of Reviews", "🟢🔴 Best/Worst Locations"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗺 Overview", "💰 Price Levels", "📊 Review Scores", "📈 Number of Reviews", "🟢🔴 Best/Worst Locations"])
+
 
 with tab1:
     #st.header("## Check the best and worst restaurants based on general info")
     folium_static(geneva_1)
     st.write(f'The overview shows {res} 📍')
-    st.write('Please use the dropdown menus on the left to make a selection')
+    st.write('Use the selection boxes on the left to change the specificities of your restaurants')
+    
 
 with tab2:
     #st.markdown("## Check the best and worst restaurants based on Price Level")
     folium_static(geneva_2)
     st.write(f'The map shows the **Price Level** of {res} 📍')
     st.write(f'Use the checkboxes to filter your selection ☑️')
+    
 
 with tab3:
     #st.header("## Check the best and worst restaurants based on Review Score")
     folium_static(geneva_3)
     st.write(f'The map shows the **Review Score** of {res} 📍')
     st.write(f'Use the checkboxes to filter your selection ☑️')
+    
 
 with tab4:
     #st.header("## Check the best and worst restaurants based on Number of Reviews")
     folium_static(geneva_4)
     st.write(f'The map shows the **Number of Reviews** of {res} 📍')
     st.write(f'Use the checkboxes to filter your selection ☑️')
+     
 
 with tab5:
     #st.header("## Check the best and worst restaurants based on Number of Reviews")
-    folium_static(geneva_5)
-    st.write('The map shows the **Best Locations** in green and **Worst Locations** in red')
-    st.write('Select the Criteria on the left to change the scoring')
+## Map 05 - Best / Worst Location
+
+    #score_com = st.slider('Number of Competitors', min_value=0, max_value=4, value=2, step=1)
+    #score_pop = st.slider('Area Popularity', min_value=0, max_value=4, value=2, step=1)
+    #score_sat = st.slider('Customer Satisfaction', min_value=0, max_value=4, value=2, step=1)
+   
+    best_locations = pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)[0]
+    worst_locations = pick_location(data, rest_district, rest_category_main, rest_category, score_com, score_pop, score_sat)[1]
+
+    for i, row in best_locations.iterrows():
+        cluster = row['district_cluster']
+        list_of_points = data[data['district_cluster']==cluster][['geometry.location.lat','geometry.location.lng']].to_numpy()
+        create_convexhull_polygon(geneva_5, list_of_points, layer_name='Best Locations',
+                            line_color='green',
+                            fill_color='green',
+                            weight=1,
+                            text=f"{row['district_cluster']}")
+
+    for i, row in worst_locations.iterrows():
+        cluster = row['district_cluster']
+        list_of_points = data[data['district_cluster']==cluster][['geometry.location.lat','geometry.location.lng']].to_numpy()
+        create_convexhull_polygon(geneva_5, list_of_points, layer_name='Best Locations',
+                            line_color='red',
+                            fill_color='red',
+                            weight=1,
+                            text=f"{row['district_cluster']}")
+    folium_static(geneva_5)   
+    
+    st.write('**Select the Scoring Criteria to see the best and worst location to open your next restaurant 🎯**')
+    st.write('Our suggestion will take in consideration the different importance you give to each criteria')
+
+        
+        
+
+
+    
 
 # Map Section END
+
+
 
 # districts = data['district'].unique() # is this required? - Burak
 

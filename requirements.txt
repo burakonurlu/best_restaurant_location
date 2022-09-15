@@ -8,6 +8,7 @@ wheel>=0.29
 numpy
 pandas
 scikit-learn
+ipython
 
 # tests/linter
 black
@@ -34,5 +35,6 @@ streamlit-folium
 folium
 operator-courier
 plotly
+geopandas
 #os
 #http

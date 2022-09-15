@@ -198,6 +198,20 @@ list_district = [
     'Pâquis Sécheron',
     'Servette Petit-Saconnex']
 
+# Required dictionary for sliders
+dict_slider1 = {'very low':0,
+               'low':1,
+               'neutral':2,
+               'high':3,
+               'very high':4}
+
+dict_slider2 = {'very low':4,
+               'low':3,
+               'neutral':2,
+               'high':1,
+               'very high':0}
+
+
 # Dropdown Menu START
 st.sidebar.write('**Select Cuisine 🍽**')
 rest_category_main = st.sidebar.selectbox("Main Restaurant Category", dict_rest.keys())
@@ -206,10 +220,16 @@ rest_district = st.sidebar.selectbox('Select Area 🗺',list_district)
 
 st.sidebar.text("")
 st.sidebar.write('**Select Scoring Criteria 🎯**')
-score_com = st.sidebar.slider('Number of Competitors', min_value=0, max_value=4, value=2, step=1)
-score_pop = st.sidebar.slider('Area Popularity', min_value=0, max_value=4, value=2, step=1)
-score_sat = st.sidebar.slider('Customer Satisfaction', min_value=0, max_value=4, value=2, step=1)
+#score_com = st.sidebar.slider('Number of Competitors', min_value=0, max_value=4, value=2, step=1)
+score_com_slider = st.sidebar.select_slider('Number of Competitors', options=['very low', 'low', 'neutral', 'high', 'very high'], value='neutral')
+score_pop_slider = st.sidebar.select_slider('Area Popularity', options=['very low', 'low', 'neutral', 'high', 'very high'], value='neutral')
+score_sat_slider = st.sidebar.select_slider('Customer Satisfaction', options=['very low', 'low', 'neutral', 'high', 'very high'], value='neutral')
+
 # Dropdown Menu END
+
+score_pop = dict_slider1[score_pop_slider]
+score_com = dict_slider2[score_com_slider]
+score_sat = dict_slider2[score_sat_slider]
 
 # filtered dataframe based on dropdpwn menu selection
 df = filter_data(data, rest_district, rest_category_main, rest_category)
@@ -339,7 +359,7 @@ for i, row in worst_locations.iterrows():
                         text=f"{row['district_cluster']}")
 
 ## Map Display
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗺 Overview", "💰 Price Levels", "📊 Review Scores", "📈 Number of Reviews", "🟢🔴 Best/Worst Locations"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗺 Overview", "＄ Price Levels", "📊 Review Scores", "📈 Number of Reviews", "🟢🔴 Best/Worst Locations"])
 
 with tab1:
     #st.header("## Check the best and worst restaurants based on general info")

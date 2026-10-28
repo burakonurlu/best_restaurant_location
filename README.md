@@ -1,10 +1,9 @@
 # Data analysis
 - Document here the project: best_restaurant_location
 - Description: Project Description
-- Data Source:
-- Type of analysis:
-
-Please document the project the better you can.
+- Data Source: Multiple
+- Type of analysis: K-NN
+- Dashboard: https://burakonurlu-best-restaurant--best-restaurant-locationapp-9gwkqw.streamlit.app/
 
 # Startup the project
 

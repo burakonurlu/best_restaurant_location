@@ -229,14 +229,14 @@ zoom_start = {'All': 13.4,
             'Saint-Jean Charmilles': 15.0,
             'Servette Petit-Saconnex': 15.0}
 
-geneva_1 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='cartodbpositron')
+geneva_1 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='OpenStreetMap')
 geneva_2 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles=None)
-folium.TileLayer('cartodbpositron', name="Price Level").add_to(geneva_2)
+folium.TileLayer('OpenStreetMap', name="Price Level").add_to(geneva_2)
 geneva_3 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles=None)
-folium.TileLayer('cartodbpositron', name="Review Score").add_to(geneva_3)
+folium.TileLayer('OpenStreetMap', name="Review Score").add_to(geneva_3)
 geneva_4 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles=None)
-folium.TileLayer('cartodbpositron', name="# of Reviews").add_to(geneva_4)
-geneva_5 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='cartodbpositron')
+folium.TileLayer('OpenStreetMap', name="# of Reviews").add_to(geneva_4)
+geneva_5 = folium.Map(location=[lat, lng], zoom_start=zoom_start[rest_district], tiles='OpenStreetMap')
 
 
 st.header('Next Restaurant in Geneva 👨🏻‍🍳🇨🇭')
